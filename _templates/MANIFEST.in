@@ -1,0 +1,12 @@
+# MANIFEST.in defines what files are included/excluded from a built pacakage
+# that gets installed through PyPI or through `pip install`
+# To modify, check out
+# https://packaging.python.org/en/latest/guides/using-manifest-in/
+
+# Include individual files
+<<requires::license include LICENSE.txt endrequires::license>>
+include requirements.txt
+<<requires::mypy include <<package-name>>/py.typed  # This file is to export types endrequires::mypy>>
+
+<<requires::testing prune tests endrequires::testing>>
+<<requires::docs prune examples endrequires::docs>>

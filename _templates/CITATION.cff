@@ -1,0 +1,30 @@
+---
+cff-version: 1.2.0
+
+message: "This is the message displayed when viewing the citation on github"
+
+title: "<<package-name>>"
+date-released: "<<date>>"
+
+url: "https://automl.github.io/<<name>>/main/"
+
+# Replace automl here with your own github name if you need
+repository-code: "https://github.com/automl/<<name>>"
+
+version: "0.0.1"
+
+type: "template"
+keywords:
+  - "template"
+
+<<requires::license license: "Apache 2.0" endrequires::license>>
+
+authors:
+  - family-names: ""
+    given-names: ""
+    affiliation: "University of Freiburg, Germany"
+
+  - family-names: ""
+    given-names: ""
+    affiliation: "University of Hannover"
+...
