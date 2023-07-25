@@ -32,8 +32,8 @@ Please find here the state dictionaries and configs for the models used in the p
 
 RNAformer 32M + cycling:
 ```
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformerts0_conform_dim256_cycling_32bit/config.yml
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformerts0_conform_dim256_cycling_32bit/state_dict.pth
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/ts0_conform_dim256_cycling_32bit/config.yml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/ts0_conform_dim256_cycling_32bit/state_dict.pth
 ```
 
 RNAformer 32M:
