@@ -134,7 +134,7 @@ RNAformer:
   zero_init: false  # init last layer per block before each residual connection
 
 rna_data:
-  dataframe_path: "/data/rna/spotrna1_conform_with_TS0.plk"
+  dataframe_path: "/data/bprna_dataset.plk"
   valid_sets: ['bprna_vl0.plk', 'pdb_vl1']
   test_sets: ['pdb_ts1', 'pdb_ts2', 'pdb_ts3', 'pdb_ts_hard', 'pdb_puzzles24',]
   oversample_pdb: 1

@@ -26,6 +26,15 @@ conda activate rnafenv
 pip install -e .
 ```
 
+## Training Datasets
+
+Please find here the datasets for the bpRNA and Rfam experiment: 
+
+```
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/bprna_dataset.plk
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/rnafold_rfam_dataset.plk
+```
+
 ## Model Checkpoints
 
 Please find here the state dictionaries and configs for the models used in the paper: 
