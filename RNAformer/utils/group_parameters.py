@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 import inspect
@@ -6,8 +5,8 @@ import inspect
 from RNAformer.utils import get_class
 
 
-def group_parameters_for_optimizer(model, optimizer_cfg, bias_weight_decay=False,
-                                   normalization_weight_decay=False):
+def group_parameters_for_optimizer(model, optimizer_cfg, bias_regularization=False,
+                                   normalization_regularization=False):
     if 'weight_decay' in optimizer_cfg:
         weight_decay = optimizer_cfg.weight_decay
     else:
@@ -31,7 +30,7 @@ def group_parameters_for_optimizer(model, optimizer_cfg, bias_weight_decay=False
     special = set()
     whitelist_weight_modules = (nn.Linear,)
     blacklist_weight_modules = (nn.Embedding,)
-    if not normalization_weight_decay:
+    if not normalization_regularization:
         blacklist_weight_modules += (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d,
                                      nn.LazyBatchNorm1d, nn.LazyBatchNorm2d, nn.LazyBatchNorm3d,
                                      nn.GroupNorm, nn.SyncBatchNorm,
@@ -50,7 +49,7 @@ def group_parameters_for_optimizer(model, optimizer_cfg, bias_weight_decay=False
                 no_decay.add(fpn)
             elif getattr(p, '_no_weight_decay', False):
                 no_decay.add(fpn)
-            elif not bias_weight_decay and pn.endswith('bias'):
+            elif not bias_regularization and pn.endswith('bias'):
                 no_decay.add(fpn)
             elif pn.endswith('weight') and isinstance(m, whitelist_weight_modules):
                 decay.add(fpn)

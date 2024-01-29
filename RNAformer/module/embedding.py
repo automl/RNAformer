@@ -69,16 +69,27 @@ class EmbedSequence2Matrix(nn.Module):
     def __init__(self, config):
         super().__init__()
 
-        self.src_embed_1 = PosEmbedding(config.seq_vocab_size, config.model_dim, config.max_len,
-                                        config.rel_pos_enc, config.initializer_range)
-        self.src_embed_2 = PosEmbedding(config.seq_vocab_size, config.model_dim, config.max_len,
-                                        config.rel_pos_enc, config.initializer_range)
+        self.pos_embedding = config.pos_embedding
 
-        self.norm = nn.LayerNorm(config.model_dim)
+        if config.pos_embedding:
+            self.src_embed_1 = PosEmbedding(config.seq_vocab_size, config.model_dim, config.max_len,
+                                            config.rel_pos_enc, config.initializer_range)
+            self.src_embed_2 = PosEmbedding(config.seq_vocab_size, config.model_dim, config.max_len,
+                                            config.rel_pos_enc, config.initializer_range)
+        else:
+            self.src_embed_1 = nn.Embedding(config.seq_vocab_size, config.model_dim)
+            self.src_embed_2 = nn.Embedding(config.seq_vocab_size, config.model_dim)
+            self.scale = nn.Parameter(torch.sqrt(torch.FloatTensor([config.model_dim // 2])), requires_grad=False)
+
+        self.norm = nn.LayerNorm(config.model_dim, eps=config.ln_eps, elementwise_affine=config.learn_ln)
 
     def forward(self, src_seq):
         seq_1_embed = self.src_embed_1(src_seq)
         seq_2_embed = self.src_embed_2(src_seq)
+
+        if not self.pos_embedding:
+            seq_1_embed = seq_1_embed * self.scale
+            seq_2_embed = seq_2_embed * self.scale
 
         pair_latent = seq_1_embed.unsqueeze(1) + seq_2_embed.unsqueeze(2)
 

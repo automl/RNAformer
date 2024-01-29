@@ -1,7 +1,6 @@
 from typing import Dict, List
 import importlib
 import inspect
-import omegaconf
 from RNAformer.utils.configuration import Config, SimpleNestedNamespace
 
 
@@ -23,9 +22,7 @@ def instantiate(config, *args, instance=None, **kwargs):
     @return:            class object
     """
 
-    if isinstance(config, omegaconf.dictconfig.DictConfig):
-        config_dict = config.__dict__['_content']
-    elif isinstance(config, Config) or isinstance(config, SimpleNestedNamespace):
+    if isinstance(config, Config) or isinstance(config, SimpleNestedNamespace):
         config_dict = config.__dict__
     elif isinstance(config, Dict):
         config_dict = config

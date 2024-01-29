@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 import pandas as pd
 
-from RNAformer.utils.data.rna import IndexDataset, CollatorRNA, TokenBasedRandomSampler
+from RNAformer.utils.data.rna import IndexDataset, CollatorRNA, SortedRandomSampler
 
 IGNORE_INDEX = -100
 PAD_INDEX = 0
@@ -18,21 +18,17 @@ class DataModuleRNA(pl.LightningDataModule):
             self,
             dataframe_path,
             num_cpu_worker,
-            num_gpu_worker,
             min_len,
             max_len,
-            similarity,
             seed,
             batch_size,
             batch_by_token_size,
             batch_token_size,
             shuffle_pool_size,
             cache_dir,
-            predict_canonical,
             oversample_pdb,
             random_ignore_mat,
-            partial_training,
-            design,
+            random_crop_mat,
             valid_sets,
             test_sets,
             logger,
@@ -42,12 +38,7 @@ class DataModuleRNA(pl.LightningDataModule):
         if not os.path.exists(dataframe_path):
             raise UserWarning(f"dataframe does not exist: {dataframe_path}")
         self.dataframe_path = dataframe_path
-        self.similarity = similarity
 
-        if isinstance(num_gpu_worker, str):
-            num_gpu_worker = len(list(map(int, num_gpu_worker.split(","))))
-
-        self.num_gpu_worker = num_gpu_worker
         if num_cpu_worker is None:
             num_cpu_worker = os.cpu_count()
         self.num_cpu_worker = num_cpu_worker
@@ -62,15 +53,15 @@ class DataModuleRNA(pl.LightningDataModule):
         self.batch_by_token_size = batch_by_token_size
 
         self.min_len = min_len
+        self.random_crop_mat = random_crop_mat
+        if random_crop_mat:
+            self.min_len = random_crop_mat
         self.max_len = max_len
         self.seed = seed
-        self.predict_canonical = predict_canonical
         self.oversample_pdb = oversample_pdb
         self.random_ignore_mat = random_ignore_mat
-        self.partial_training = partial_training
-        self.design = design
 
-        self.samples_cache_file = f"{dataframe_path.split('/')[-1].split('.')[0]}_len{self.min_len}{self.max_len}_design{design}_canonical{predict_canonical}_oversampling{oversample_pdb}_seed{self.seed}_v3.pth"
+        self.samples_cache_file = f"{dataframe_path.split('/')[-1].split('.')[0]}_len{self.min_len}{self.max_len}_oversampling{oversample_pdb}_seed{self.seed}_v7.pth"
 
         self.logger = logger
 
@@ -78,12 +69,7 @@ class DataModuleRNA(pl.LightningDataModule):
         self.pad_index = PAD_INDEX
 
         self.seq_vocab = ['A', 'C', 'G', 'U', 'N']
-        if self.partial_training:
-            self.seq_vocab = ['O'] + self.seq_vocab
-        if design:
-            self.seq_vocab = ['EOS'] + self.seq_vocab
 
-        self.canonical_pairs = ['GC', 'CG', 'AU', 'UA', 'GU', 'UG']
         self.seq_stoi = dict(zip(self.seq_vocab, range(len(self.seq_vocab))))
         nucs = {
             'T': 'U',
@@ -103,23 +89,15 @@ class DataModuleRNA(pl.LightningDataModule):
         for nuc, mapping in nucs.items():
             self.seq_stoi[nuc] = self.seq_stoi[mapping]
 
-        if self.predict_canonical:
-            self.struct_vocab = ['.', '(0c', ')0c', '(1c', ')1c', '(2c', ')2c', '(0nc', ')0nc', '(1nc', ')1nc', '(2nc',
-                                 ')2nc']
-        else:
-            self.struct_vocab = ['.', '(0', ')0', '(1', ')1', '(2', ')2']
-
-        self.struct_itos = dict(zip(range(len(self.struct_vocab)), self.struct_vocab))
-        self.struct_stoi = dict((y, x) for x, y in self.struct_itos.items())
-
         self.seq_vocab_size = len(self.seq_vocab)
-        self.struct_vocab_size = len(self.struct_vocab)
 
         self.rng = np.random.RandomState(self.seed)
         self.collator = CollatorRNA(self.pad_index, self.ignore_index)
 
         self.valid_sets = valid_sets
         self.test_sets = test_sets
+
+        self.train_seed = 0
 
     def prepare_data(self):
 
@@ -148,8 +126,9 @@ class DataModuleRNA(pl.LightningDataModule):
             self.logger.info(f'Finished preprocessing {len(train_samples)} train samples')
 
             for valid_name in self.valid_sets:
+                if valid_name not in df.set.unique():
+                    continue
                 valid_df = df[df['set'].str.contains(valid_name)]
-                valid_df = valid_df[valid_df['sequence'].apply(lambda x: self.min_len <= len(x) <= self.max_len)]
                 valid_df = valid_df.reset_index()
                 valid_samples = []
                 for id, sample in valid_df.iterrows():
@@ -176,53 +155,19 @@ class DataModuleRNA(pl.LightningDataModule):
         int_sequence = list(map(mapping.get, sequence))
         return torch.LongTensor(int_sequence)
 
-    def _create_dot_bracket(self, sequence, pos1id, pos2id, pk_list):
-        structure = ['.'] * len(sequence)
-
-        for id1, id2, pk in zip(pos1id, pos2id, pk_list):
-            pk = min(pk, 2)
-            if self.predict_canonical:
-                pair_type = "c" if sequence[id1] + sequence[id2] in self.canonical_pairs else "nc"
-                if id1 < id2:
-                    structure[id1] = f"({pk}{pair_type}"
-                    structure[id2] = f"){pk}{pair_type}"
-                else:
-                    structure[id2] = f"({pk}{pair_type}"
-                    structure[id1] = f"){pk}{pair_type}"
-            else:
-                if id1 < id2:
-                    structure[id1] = f"({pk}"
-                    structure[id2] = f"){pk}"
-                else:
-                    structure[id2] = f"({pk}"
-                    structure[id1] = f"){pk}"
-
-        return structure
-
     def _prepare_RNA_sample(self, input_sample):
 
         sequence = input_sample["sequence"]
         pos1id = input_sample["pos1id"]
         pos2id = input_sample["pos2id"]
-        pk_list = input_sample["pk"]
-        if 'is_pdb' in input_sample:
-            pdb_sample = int(input_sample['is_pdb'])
-        else:
-            pdb_sample = 0
+        pdb_sample = int(input_sample['is_pdb'])
 
         length = len(sequence)
 
-        target_structure = self._create_dot_bracket(sequence, pos1id, pos2id, pk_list)
         src_seq = self.sequence2index_vector(sequence, self.seq_stoi)
-        trg_struct = self.sequence2index_vector(target_structure, self.struct_stoi)
 
         torch_sample = {}
         torch_sample['src_seq'] = src_seq.clone()
-        torch_sample['src_struct'] = trg_struct.clone()
-
-        if self.design:
-            shifted_sequence = ['EOS'] + sequence[:-1]
-            torch_sample['shifted_seq'] = self.sequence2index_vector(shifted_sequence, self.seq_stoi)
 
         torch_sample['length'] = torch.LongTensor([length])[0]
         torch_sample['pos1id'] = torch.LongTensor(pos1id)
@@ -230,60 +175,40 @@ class DataModuleRNA(pl.LightningDataModule):
         torch_sample['pdb_sample'] = torch.LongTensor([pdb_sample])[0]
 
         torch_sample['trg_seq'] = src_seq.clone()
-        torch_sample['trg_struct'] = trg_struct.clone()
-
-        if self.partial_training:
-            torch_sample['post_seq'] = src_seq.clone()
-            torch_sample['post_struct'] = trg_struct.clone()
 
         return torch_sample
 
     def setup(self, stage):
 
-        local_rank = torch.distributed.get_rank()
-
         sample_dict = torch.load(self.cache_dir / self.samples_cache_file)
         self.logger.info(
-            f"Load preprocessed data from {(self.cache_dir / self.samples_cache_file).as_posix()} at rank {local_rank}.")
+            f"Load preprocessed data from {(self.cache_dir / self.samples_cache_file).as_posix()} .")
 
         for set_name, set in sample_dict.items():
             self.logger.info(f'Load preprocessed {set_name} {len(set)} samples')
 
         self.train_samples = sample_dict['train']
-        train_indexes = list(range(len(self.train_samples)))
-        train_index_dataset = IndexDataset(train_indexes)
-        token_key_fn = lambda s: len(self.train_samples[s]['src_seq'])
-        self.minibatch_sampler = TokenBasedRandomSampler(train_index_dataset,
-                                                         token_key_fn,
-                                                         batch_token_size=self.batch_token_size,
-                                                         batching=True,
-                                                         repeat=False,
-                                                         sort_samples=True,
-                                                         shuffle=True,
-                                                         shuffle_pool_size=self.shuffle_pool_size,
-                                                         drop_last=True,
-                                                         seed=self.seed
-                                                         )
-
         self.valid_minibatch_sampler = {}
         self.valid_samples_dict = {}
         for valid_name in self.valid_sets:
+
+            if valid_name not in sample_dict:
+                continue
+
             valid_samples = sample_dict[valid_name]
             self.valid_samples_dict[valid_name] = valid_samples
             valid_indexes = list(range(len(valid_samples)))
             valid_index_dataset = IndexDataset(valid_indexes)
-            valid_token_key_fn = lambda s: len(valid_samples[s]['src_seq'])
-            val_sampler = TokenBasedRandomSampler(valid_index_dataset,
-                                                  valid_token_key_fn,
-                                                  batch_token_size=self.batch_token_size,
-                                                  batching=True,
-                                                  repeat=False,
-                                                  sort_samples=True,
-                                                  shuffle=False,
-                                                  shuffle_pool_size=self.shuffle_pool_size,
-                                                  drop_last=False,
-                                                  seed=self.seed
-                                                  )
+            valid_token_key_fn = lambda s: self.train_samples[s]['length']
+            val_sampler = SortedRandomSampler(valid_index_dataset,
+                                              valid_token_key_fn,
+                                              batch_size=self.batch_size,
+                                              repeat=False,
+                                              sort_samples=True,
+                                              shuffle=False,
+                                              shuffle_pool_size=self.shuffle_pool_size,
+                                              drop_last=False,
+                                              )
             self.valid_minibatch_sampler[valid_name] = val_sampler
 
     def ignore_partial_mat(self, batch):
@@ -299,86 +224,47 @@ class DataModuleRNA(pl.LightningDataModule):
 
         rand_mat = torch.rand_like(trg_mat.float()) < self.random_ignore_mat
         rand_mat = torch.logical_and(rand_mat, torch.logical_not(filter_trg))
-        trg_mat.masked_fill_(rand_mat, self.ignore_index)
-
-        batch['trg_mat'] = trg_mat
+        batch['mask'] = batch['mask'].masked_fill_(rand_mat, False)
         return batch
 
     def train_dataloader(self):
         """This will be run every epoch."""
 
-        if self.batch_by_token_size:
-            minibatches = self.minibatch_sampler.precompute_minibatches()
+        train_samples = self.train_samples
+        np_rng = np.random.RandomState(self.train_seed)
+        train_samples = np_rng.permutation(train_samples)
 
-            if self.num_gpu_worker > 1:
-                local_rank = torch.distributed.get_rank()
-                numb_batches = len(minibatches)
-                batches_per_rank = numb_batches // self.num_gpu_worker
+        train_indexes = list(range(len(train_samples)))
+        train_index_dataset = IndexDataset(train_indexes)
+        token_key_fn = lambda s: train_samples[s]['length']
+        minibatch_sampler = SortedRandomSampler(train_index_dataset,
+                                                token_key_fn,
+                                                batch_size=self.batch_size,
+                                                repeat=False,
+                                                sort_samples=True,
+                                                shuffle=True,
+                                                shuffle_pool_size=self.shuffle_pool_size,
+                                                drop_last=True,
+                                                rng=np_rng
+                                                )
 
-                minibatches = minibatches[local_rank * batches_per_rank: (local_rank + 1) * batches_per_rank]
+        def train_pl_collate_fn(raw_samples):
+            batch = self.collator(raw_samples)
 
-            def train_pl_collate_fn(indices):
-                indices = minibatches[indices[0]]
-                if self.partial_training:
-                    raw_samples = [self.partial_sample(self.train_samples[i]) for i in indices]
-                else:
-                    raw_samples = [self.train_samples[i] for i in indices]
+            if self.random_ignore_mat:
+                batch = self.ignore_partial_mat(batch)
 
-                batch = self.collator(raw_samples)
+            return batch
 
-                if self.random_ignore_mat:
-                    batch = self.ignore_partial_mat(batch)
-
-                return batch
-
-            train_indexes = list(range(len(minibatches)))
-            train_index_dataset = IndexDataset(train_indexes)
-
-            loader = DataLoader(
-                train_index_dataset,
-                batch_size=1,
-                collate_fn=train_pl_collate_fn,
-                num_workers=self.num_cpu_worker,
-                pin_memory=False,
-                drop_last=False,
-            )
-
-        else:
-            def train_pl_collate_fn(indices):
-
-                raw_samples = [self.train_samples[i] for i in indices]
-
-                batch = self.collator(raw_samples)
-
-                if self.random_ignore_mat:
-                    batch = self.ignore_partial_mat(batch)
-
-                return batch
-
-            train_indexes = list(range(len(self.train_samples)))
-            train_indexes = self.rng.permutation(train_indexes)
-
-            if self.num_gpu_worker > 1:
-                local_rank = torch.distributed.get_rank()
-                numb_samples = len(train_indexes)
-                batches_per_rank = numb_samples // self.num_gpu_worker
-
-                if numb_samples != self.num_gpu_worker * batches_per_rank:
-                    train_indexes = train_indexes[: numb_samples - numb_samples % self.num_gpu_worker]
-
-                train_indexes = train_indexes[local_rank * batches_per_rank: (local_rank + 1) * batches_per_rank]
-
-            train_index_dataset = IndexDataset(train_indexes)
-
-            loader = DataLoader(
-                train_index_dataset,
-                batch_size=self.batch_size,
-                collate_fn=train_pl_collate_fn,
-                num_workers=self.num_cpu_worker,
-                shuffle=True,
-                pin_memory=False,
-                drop_last=True,
-            )
+        loader = DataLoader(
+            train_samples,
+            batch_sampler=minibatch_sampler,
+            collate_fn=train_pl_collate_fn,
+            num_workers=self.num_cpu_worker,
+            shuffle=False,
+            pin_memory=True,
+            drop_last=False,
+        )
 
         self.logger.info("Finished loading training data")
         return loader

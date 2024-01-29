@@ -8,7 +8,7 @@ class RNAformerStack(nn.Module):
     def __init__(self, config):
         super().__init__()
 
-        self.output_ln = nn.LayerNorm(config.model_dim)
+        self.output_ln = nn.LayerNorm(config.model_dim, eps=config.ln_eps, elementwise_affine=config.learn_ln)
 
         module_list = []
         for idx in range(config.n_layers):

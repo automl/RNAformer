@@ -9,7 +9,6 @@ def analyse_pairs(mat, sequence):
     pairs = mat2pairs(mat)
     wc = ['AU', 'UA', 'GC', 'CG']
     wobble = ['GU', 'UG']
-    canonical = wc + wobble
     pair_types = collections.defaultdict(list)
     per_position_pairs = collections.defaultdict(list)
     closers = []

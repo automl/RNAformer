@@ -3,6 +3,44 @@ import yaml
 import pathlib
 import copy
 from typing import Dict
+from functools import reduce
+import operator
+
+
+def getFromDict(dataDict, mapList):
+    return reduce(operator.getitem, mapList, dataDict)
+
+
+def setInDict(dataDict, mapList, value):
+    getFromDict(dataDict, mapList[:-1])[mapList[-1]] = value
+
+
+def convert_string_value(value):
+    if value in ('false', 'False'):
+        value = False
+    elif value in ('true', 'True'):
+        value = True
+    else:
+        try:
+            value = int(value)
+        except:
+            try:
+                value = float(value)
+            except:
+                pass
+    return value
+
+
+def read_unknown_args(unknown_args, config_dict):
+    for arg in unknown_args:
+        if '=' in arg:
+            keys = arg.split('=')[0].split('.')
+            value = convert_string_value(arg.split('=')[1])
+            print(keys, value)
+            setInDict(config_dict, keys, value)
+        else:
+            raise UserWarning(f"argument unknown: {arg}")
+    return config_dict
 
 
 class SimpleNestedNamespace(Dict):
