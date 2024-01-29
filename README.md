@@ -1,7 +1,7 @@
 # RNAformer
 
 This repository contains the source code to the paper "RNAformer" and to the workshop paper 
-*Scalable Deep Learning for RNA Secondary Structure Prediction* 
+[*Scalable Deep Learning for RNA Secondary Structure Prediction*](https://arxiv.org/abs/2307.10073) 
 accepted at the 2023 ICML Workshop on Computational Biology.
 
 ### Abstract
