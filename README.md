@@ -13,7 +13,7 @@ and by scaling the size of the model. Our approach achieves state-of-the-art per
 even outperforms methods that use external information. Further, we show experimentally that the RNAformer can learn a biophysical 
 model of the RNA folding process.
 
-## Replicate results
+## Reproduce results
 
 ### Clone the repository
 
@@ -45,7 +45,7 @@ bash download_models.sh
 ```
     
 
-## Reproduce results from the paper
+### Reproduce results from the paper
 
 ``` 
 bash run_evaluation.sh
