@@ -26,7 +26,13 @@ cd RNAformer
 
 
 ```
-bash setup_env.sh
+python3 -m venv venv
+
+source venv/bin/activate
+
+pip install -r requirements.txt
+pip install flash-attn==2.3.4
+pip install -e .
 ```
 
 
@@ -52,6 +58,14 @@ bash run_evaluation.sh
 ```
 
 
+## Infer RNAformer for RNA sequence:
+
+An example of a inference, the script outputs position indexes in the adjacency matrix that are predicted to be paired. 
+
+``` 
+python infer_RNAformer.py -c 6 -s GCCCGCAUGGUGAAAUCGGUAAACACAUCGCACUAAUGCGCCGCCUCUGGCUUGCCGGUUCAAGUCCGGCUGCGGGCACCA --state_dict models/RNAformer_32M_state_dict_intra_family_finetuned.pth --config models/RNAformer_32M_config_intra_family_finetuned.yml
+``` 
+
 ## Model Checkpoints
 
 Please find here the state dictionaries and configs for the models used in the paper: 
@@ -59,23 +73,23 @@ Please find here the state dictionaries and configs for the models used in the p
 RNAformer 32M from the biophysical model experiment:
 ```
 https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_biophysical.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_biophysical.yaml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_biophysical.yml
 ```
 
 RNAformer 32M from the bprna model experiment:
 ```
 https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_bprna.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_bprna.yaml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_bprna.yml
 ```
 
 RNAformer 32M from the intra family finetuning experiment:
 ```
 https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_intra_family_finetuned.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_intra_family_finetuned.yaml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_intra_family_finetuned.yml
 ```
 
 RNAformer 32M from the inter family finetuning experiment:
 ```
 https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_inter_family_finetuned.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_inter_family_finetuned.yaml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_inter_family_finetuned.yml
 ```

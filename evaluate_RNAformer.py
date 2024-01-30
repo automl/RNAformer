@@ -184,7 +184,7 @@ def evaluate_RNAformer(model, test_sets, eval_synthetic=False, eval_bprna=False)
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Train RNAformer')
+    parser = argparse.ArgumentParser(description='Evaluate RNAformer')
     parser.add_argument('--state_dict', type=str, default=None)
     parser.add_argument('--config', type=str, default=None)
     parser.add_argument('-s', '--save_predictions', action='store_true')
