@@ -24,6 +24,7 @@ cd RNAformer
 
 ### Install virtual environment
 
+The Flash Attention requeires currently a Ampere, Ada, or Hopper GPU (e.g., A100, RTX 3090, RTX 4090, H100). Support for Turing GPUs (T4, RTX 2080) is coming soon. 
 
 ```
 python3 -m venv venv
