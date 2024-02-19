@@ -1,17 +1,13 @@
 # RNAformer
 
-This repository contains the source code to the paper "RNAformer" and to the workshop paper 
+This repository contains the source code to the preprint [*RNAformer: A Simple Yet Effective Deep Learning Model for RNA Secondary Structure Prediction*](https://www.biorxiv.org/content/10.1101/2024.02.12.579881v1)  and to the preceding workshop paper 
 [*Scalable Deep Learning for RNA Secondary Structure Prediction*](https://arxiv.org/abs/2307.10073) 
-accepted at the 2023 ICML Workshop on Computational Biology.
+presented at the 2023 ICML Workshop on Computational Biology.
 
 ### Abstract
 
-The field of RNA secondary structure prediction has made significant progress with the adoption of deep learning techniques. 
-In this work, we present the RNAformer, a lean deep learning model using axial attention and recycling in the latent space. 
-We gain performance improvements by designing the architecture for modeling the adjacency matrix directly in the latent space 
-and by scaling the size of the model. Our approach achieves state-of-the-art performance on the popular benchmark datasets and 
-even outperforms methods that use external information. Further, we show experimentally that the RNAformer can learn a biophysical 
-model of the RNA folding process.
+Traditional RNA secondary structure prediction methods, based on dynamic programming, often fall short in accuracy. Recent advances in deep learning have aimed to address this, but may not adequately learn the biophysical model of RNA folding. Many deep learning approaches are also too complex, incorporating multi-model systems, ensemble strategies, or requiring external data like multiple sequence alignments. In this study, we demonstrate that a single deep learning model, relying solely on RNA sequence input, can effectively learn a biophysical model and outperform existing deep learning methods in standard benchmarks, as well as achieve comparable results to methods that utilize multi-sequence alignments. We dub this model RNAformer and achieve these benefits by a two-dimensional latent space, axial attention, and recycling in the latent space. Further, we found that our model performance improves when we scale it up. We also demonstrate how to refine a pre-trained RNAformer with fine-tuning techniques, which are particularly efficient when applied to a limited amount of high-quality data. A further aspect of our work is addressing the challenges in dataset curation in deep learning, especially regarding data homology. We tackle this through an advanced data processing pipeline that allows for training and evaluation of our model across various levels of sequence similarity. Our models and datasets are openly accessible, offering a simplified yet effective tool for RNA secondary structure prediction.
+
 
 ## Reproduce results
 
