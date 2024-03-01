@@ -37,14 +37,14 @@ pip install -e .
 ### Download datasets
 
 ```
-bash download_datasets.sh
+bash download_all_datasets.sh
 ``` 
 
 
 ### Download pretrained models
 
 ``` 
-bash download_models.sh
+bash download_all_models.sh
 ```
     
 
