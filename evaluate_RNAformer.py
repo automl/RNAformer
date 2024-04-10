@@ -91,13 +91,16 @@ def prepare_RNA_sample(input_sample):
 
 
 def evaluate_RNAformer(model, test_sets, eval_synthetic=False, eval_bprna=False):
-    model = model.cuda()
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # check GPU can do bf16
-    if torch.cuda.is_bf16_supported():
-        model = model.bfloat16()
-    else:
-        model = model.half()
+    if torch.cuda.is_available():
+        model = model.cuda()
+
+        # check GPU can do bf16
+        if torch.cuda.is_bf16_supported():
+            model = model.bfloat16()
+        else:
+            model = model.half()
 
     model.eval()
 
@@ -128,17 +131,20 @@ def evaluate_RNAformer(model, test_sets, eval_synthetic=False, eval_bprna=False)
 
                 sample = prepare_RNA_sample(sample_raw)
 
-                sequence = sample['src_seq'].unsqueeze(0).cuda()
-                src_len = torch.LongTensor([sequence.shape[-1]]).cuda()
-                if torch.cuda.is_bf16_supported():
-                    pdb_sample = torch.FloatTensor([[1]]).bfloat16().cuda()
-                else:
-                    pdb_sample = torch.FloatTensor([[1]]).half().cuda()
+                sequence = sample['src_seq'].unsqueeze(0).to(device)
+                src_len = torch.LongTensor([sequence.shape[-1]]).to(device)
 
+                if torch.cuda.is_available():
+                    if torch.cuda.is_bf16_supported():
+                        pdb_sample = torch.FloatTensor([[1]]).bfloat16().cuda()
+                    else:
+                        pdb_sample = torch.FloatTensor([[1]]).half().cuda()
+                else:
+                     pdb_sample = torch.FloatTensor([[1]]).to(device)
                 logits, pair_mask = model(sequence, src_len, pdb_sample)
 
                 pred_mat = torch.sigmoid(logits[0, :, :, -1]) > 0.5
-                true_mat = sample['trg_mat'].float().cuda()
+                true_mat = sample['trg_mat'].float().to(device)
 
                 save_sample = {}
                 for nkey in ['sequence', 'pk', 'has_multiplet', 'has_pk', 'set', 'has_nc']:
@@ -204,7 +210,10 @@ if __name__ == '__main__':
     if hasattr(config, "lora") and config.lora:
         model = insert_lora_layer(model, config)
 
-    state_dict = torch.load(args.state_dict)
+    if torch.cuda.is_available():
+            state_dict = torch.load(args.state_dict)
+    else:
+        state_dict = torch.load(args.state_dict, map_location=torch.device('cpu'))
 
     model.load_state_dict(state_dict, strict=True)
 
