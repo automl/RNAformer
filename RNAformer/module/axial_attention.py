@@ -150,7 +150,7 @@ class Attention2d(nn.Module):
         attn_weights = torch.matmul(query, key)
 
         if self.softmax_scale:
-            attn_weights = attn_weights / self.softmax_scale.to(pair_act.device)
+            attn_weights *= self.softmax_scale.to(pair_act.device)
 
         if attention_mask is not None:
             attention_mask = attention_mask[:, :, None, None, :]
@@ -267,7 +267,7 @@ class AxialAttention(nn.Module):
         attn_weights = torch.matmul(query, key)
 
         if softmax_scale:
-            attn_weights = attn_weights / softmax_scale
+            attn_weights *= softmax_scale
 
         if attention_mask is not None:
             attention_mask = attention_mask[:, :, None, None, :]
