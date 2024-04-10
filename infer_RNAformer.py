@@ -78,7 +78,12 @@ if __name__ == '__main__':
     if hasattr(config, "lora") and config.lora:
         model = insert_lora_layer(model, config)
 
-    state_dict = torch.load(args.state_dict)
+    # state_dict = torch.load(args.state_dict)
+
+    if torch.cuda.is_available():
+        state_dict = torch.load(args.state_dict)
+    else:
+        state_dict = torch.load(args.state_dict, map_location=torch.device('cpu'))
 
     model.load_state_dict(state_dict, strict=True)
 
@@ -87,17 +92,20 @@ if __name__ == '__main__':
 
     model_name = args.state_dict.split(".pth")[0]
 
-    model = model.cuda()
+    if torch.cuda.is_available():
+        model = model.cuda()
 
-    # check GPU can do bf16
-    if torch.cuda.is_bf16_supported():
-        model = model.bfloat16()
-    else:
-        model = model.half()
+        # check GPU can do bf16
+        if torch.cuda.is_bf16_supported():
+            model = model.bfloat16()
+        else:
+            model = model.half()
 
     model.eval()
 
     with torch.no_grad():
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
         seq_vocab = ['A', 'C', 'G', 'U', 'N']
         seq_stoi = dict(zip(seq_vocab, range(len(seq_vocab))))
@@ -113,12 +121,15 @@ if __name__ == '__main__':
         sample['length'] = torch.LongTensor([length])[0]
         sample['pdb_sample'] = torch.LongTensor([pdb_sample])[0]
 
-        sequence = sample['src_seq'].unsqueeze(0).cuda()
-        src_len = torch.LongTensor([sequence.shape[-1]]).cuda()
-        if torch.cuda.is_bf16_supported():
-            pdb_sample = torch.FloatTensor([[1]]).bfloat16().cuda()
+        sequence = sample['src_seq'].unsqueeze(0).to(device)
+        src_len = torch.LongTensor([sequence.shape[-1]]).to(device)
+        if torch.cuda.is_available():
+                    if torch.cuda.is_bf16_supported():
+                        pdb_sample = torch.FloatTensor([[1]]).bfloat16().cuda()
+                    else:
+                        pdb_sample = torch.FloatTensor([[1]]).half().cuda()
         else:
-            pdb_sample = torch.FloatTensor([[1]]).half().cuda()
+            pdb_sample = torch.FloatTensor([[1]]).to(device)
 
         logits, pair_mask = model(sequence, src_len, pdb_sample)
 
