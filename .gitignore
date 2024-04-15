@@ -9,3 +9,7 @@
 *.iml
 *.pyc
 *.xml
+/models
+/datasets
+/RNAformer.egg-info
+*rnaformer.egg-info*
