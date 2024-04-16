@@ -1,0 +1,44 @@
+{% set name = "rnaformer" %}
+{% set version = "1.0.0" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
+  sha256: 2f47a384c98b51275bffd5a9045a8e4e4c9e1bbd91582480e2a62cabe4af7da4
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation"
+
+requirements:
+  host:
+    - pip
+    - python
+  run:
+    - python
+
+test:
+  imports:
+    - model
+    - module
+    - pl_module
+    - utils
+    - utils.data
+    - utils.handler
+    - utils.optim
+
+about:
+  home: The package home page
+  license: UNKNOWN
+  license_family: OTHER
+  license_file: 
+  summary: "RNAformer: a simple single-sequence-based deep learning model for RNA secondary structure prediction."
+  doc_url: 
+  dev_url: 
+
+extra:
+  recipe-maintainers:
+    - your-github-id-here
