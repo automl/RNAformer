@@ -6,7 +6,7 @@ authors = [
   { name="Frederic Runge", email="runget@cs.uni-freiburg.de" },
   { name="Ryan Koeksal", email="koeksalr@informatik.uni-freiburg.de" },
   { name="Rolf Backofen", email="backofen@informatik.uni-freiburg.de"},
-  { name="Frank Hutter"},
+  { name="Frank Hutter", email="fh@cs.uni-freiburg.de"},
 ]
 description = "RNAformer: a simple single-sequence-based deep learning model for RNA secondary structure prediction."
 readme = "README.md"
