@@ -12,7 +12,7 @@ def is_package_installed(package_name):
     installed_packages = {pkg.key for pkg in pkg_resources.working_set}
     return package_name in installed_packages
 
-if is_package_installed('flash_attn'):
+if is_package_installed('flash-attn'):
     from flash_attn.bert_padding import unpad_input, pad_input
     from flash_attn.flash_attn_interface import flash_attn_varlen_qkvpacked_func
     
@@ -150,7 +150,7 @@ class Attention2d(nn.Module):
         attn_weights = torch.matmul(query, key)
 
         if self.softmax_scale:
-            attn_weights *= self.softmax_scale.to(pair_act.device)
+            attn_weights /= self.softmax_scale.to(pair_act.device)
 
         if attention_mask is not None:
             attention_mask = attention_mask[:, :, None, None, :]
@@ -177,7 +177,7 @@ class TriangleAttention(nn.Module):
 
         self.input_norm = nn.LayerNorm(model_dim, eps=1e-6)
 
-        if flash_attn and is_package_installed('flash_attn'):
+        if flash_attn and is_package_installed('flash-attn'):
             self.attn = FlashAttention2d(model_dim, num_head, softmax_scale, zero_init, use_bias,
                                          initializer_range, n_layers)
         else:
@@ -303,7 +303,7 @@ class AxialAttention(nn.Module):
         query = apply_rotary_emb(freqs, query)
         key = apply_rotary_emb(freqs, key)
 
-        if self.use_flash_attn and is_package_installed('flash_attn'):
+        if self.use_flash_attn and is_package_installed('flash-attn'):
             qkv = torch.cat((query, key, value), dim=-1)
             not_attention_mask = torch.logical_not(pair_mask)
 
