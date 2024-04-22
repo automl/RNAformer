@@ -296,8 +296,8 @@ class AxialAttention(nn.Module):
 
         query, key, value = self.Wqkv(pair_act).split(self.model_dim, dim=3)
 
-        freqs_h = self.rotary_emb(torch.linspace(-1, 1, steps=seqlen).to(pair_act.device), cache_key=seqlen)
-        freqs_w = self.rotary_emb(torch.linspace(-1, 1, steps=seqlen).to(pair_act.device), cache_key=seqlen)
+        freqs_h = self.rotary_emb(torch.linspace(-1, 1, steps=seqlen).to(pair_act.device), seq_len=seqlen)
+        freqs_w = self.rotary_emb(torch.linspace(-1, 1, steps=seqlen).to(pair_act.device), seq_len=seqlen)
         freqs = broadcat((freqs_h[:, None, :], freqs_w[None, :, :]), dim=-1)
 
         query = apply_rotary_emb(freqs, query)
