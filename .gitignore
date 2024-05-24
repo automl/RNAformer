@@ -1,5 +1,4 @@
 
-
 *.pt
 *cache*
 */cache*
@@ -9,3 +8,8 @@
 *.iml
 *.pyc
 *.xml
+/build
+/dist
+/models
+/datasets
+*RNAformer.egg-info

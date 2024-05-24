@@ -8,7 +8,6 @@ presented at the 2023 ICML Workshop on Computational Biology.
 
 Traditional RNA secondary structure prediction methods, based on dynamic programming, often fall short in accuracy. Recent advances in deep learning have aimed to address this, but may not adequately learn the biophysical model of RNA folding. Many deep learning approaches are also too complex, incorporating multi-model systems, ensemble strategies, or requiring external data like multiple sequence alignments. In this study, we demonstrate that a single deep learning model, relying solely on RNA sequence input, can effectively learn a biophysical model and outperform existing deep learning methods in standard benchmarks, as well as achieve comparable results to methods that utilize multi-sequence alignments. We dub this model RNAformer and achieve these benefits by a two-dimensional latent space, axial attention, and recycling in the latent space. Further, we found that our model performance improves when we scale it up. We also demonstrate how to refine a pre-trained RNAformer with fine-tuning techniques, which are particularly efficient when applied to a limited amount of high-quality data. A further aspect of our work is addressing the challenges in dataset curation in deep learning, especially regarding data homology. We tackle this through an advanced data processing pipeline that allows for training and evaluation of our model across various levels of sequence similarity. Our models and datasets are openly accessible, offering a simplified yet effective tool for RNA secondary structure prediction.
 
-
 ## Reproduce results
 
 ### Clone the repository
@@ -20,7 +19,7 @@ cd RNAformer
 
 ### Install virtual environment
 
-The Flash Attention requeires currently a Ampere, Ada, or Hopper GPU (e.g., A100, RTX 3090, RTX 4090, H100). Support for Turing GPUs (T4, RTX 2080) is coming soon. 
+The Flash Attention package currently requires a Ampere, Ada, or Hopper GPU (e.g., A100, RTX 3090, RTX 4090, H100). Support for Turing GPUs (T4, RTX 2080) is coming soon. 
 
 ```
 python3 -m venv venv
@@ -31,8 +30,15 @@ pip install -r requirements.txt
 pip install flash-attn==2.3.4
 pip install -e .
 ```
+Alternatively, you may install RNAformer without Flash Attention or a GPU for inference and evaluation:
+```
+python3 -m venv venv
 
+source venv/bin/activate
 
+pip install -r requirements.txt
+pip install -e .
+```
 
 ### Download datasets
 
@@ -69,24 +75,24 @@ Please find here the state dictionaries and configs for the models used in the p
 
 RNAformer 32M from the biophysical model experiment:
 ```
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_biophysical.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_biophysical.yml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_state_dict_biophysical.pth
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_config_biophysical.yml
 ```
 
 RNAformer 32M from the bprna model experiment:
 ```
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_bprna.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_bprna.yml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_state_dict_bprna.pth
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_config_bprna.yml
 ```
 
 RNAformer 32M from the intra family finetuning experiment:
 ```
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_intra_family_finetuned.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_intra_family_finetuned.yml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_state_dict_intra_family_finetuned.pth
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_config_intra_family_finetuned.yml
 ```
 
 RNAformer 32M from the inter family finetuning experiment:
 ```
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_state_dict_inter_family_finetuned.pth
-https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/datasets/RNAformer_32M_config_inter_family_finetuned.yml
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_state_dict_inter_family_finetuned.pth
+https://ml.informatik.uni-freiburg.de/research-artifacts/RNAformer/models/RNAformer_32M_config_inter_family_finetuned.yml
 ```
