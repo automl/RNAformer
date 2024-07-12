@@ -4,7 +4,7 @@ torchaudio==2.1.0
 tqdm
 pyyaml
 pyaml
-numpy
+numpy<2
 packaging
 wheel
 tabulate
